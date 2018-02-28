@@ -7,15 +7,15 @@ namespace Codurance.Domain
     public class Account 
     {
         private readonly List<Transaction> transactions = new List<Transaction>();
-        private readonly Action<TransactionCreatedEventArgs> onTransactionCreatedEvent;
-        private readonly Action<TransactionsPrintedEventArgs> onTransactionsPrintedEvent;
+        private readonly Action<TransactionCreatedEventArgs> transactionCreatedEvent;
+        private readonly Action<TransactionsPrintedEventArgs> transactionsPrintedEvent;
 
         public Account(
-            Action<TransactionCreatedEventArgs> onTransactionCreatedEvent = null,
-            Action<TransactionsPrintedEventArgs> onTransactionsPrintedEvent = null)
+            Action<TransactionCreatedEventArgs> transactionCreatedEvent = null,
+            Action<TransactionsPrintedEventArgs> transactionsPrintedEvent = null)
         {
-            this.onTransactionCreatedEvent = onTransactionCreatedEvent;
-            this.onTransactionsPrintedEvent = onTransactionsPrintedEvent;
+            this.transactionCreatedEvent = transactionCreatedEvent;
+            this.transactionsPrintedEvent = transactionsPrintedEvent;
         }
 
         public void Deposit(int amount)
@@ -40,12 +40,12 @@ namespace Codurance.Domain
 
        protected void OnTransactionCreated(TransactionCreatedEventArgs arg)
         {
-            onTransactionCreatedEvent?.Invoke(arg);
+            transactionCreatedEvent?.Invoke(arg);
         }
 
         protected void OnTransactionsPrint(TransactionsPrintedEventArgs arg)
         {
-            onTransactionsPrintedEvent?.Invoke(arg);
+            transactionsPrintedEvent?.Invoke(arg);
         }
 
         private int GetCurrentBalance()
