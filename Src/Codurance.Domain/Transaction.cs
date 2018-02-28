@@ -6,13 +6,13 @@ namespace Codurance.Domain
     {
         public Transaction(int amount, string createdDate, int balance)
         {
-            Amount = amount;
-            CreatedDate = createdDate;
+            Amount = amount;            
             Balance = balance;
+            CreatedDate = createdDate;
         }
 
-        public int Amount { get; }
-        public string CreatedDate { get; }
+        public int Amount { get; }        
         public int Balance { get; }
+        public string CreatedDate { get; }
     }
 }

@@ -31,7 +31,6 @@ namespace Codurance.Domain.Unit.Tests
             {
                 Transaction expectedTransaction = null;
                 Account subject = new Account((arg) => expectedTransaction = arg.Transaction);
-                Regex expectedDataFormat = new Regex(@"^(\d{1,2})\/(\d{1,2})\/(\d{4})$");
 
                 subject.Deposit(1000);
 

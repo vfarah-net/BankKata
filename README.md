@@ -32,13 +32,13 @@ Statements should have transactions in this format
 ### Scenarios
 > Given a client makes a deposit of 1000 on the first date 
 
-And a withdrawal of 100 on the next date
+> And a withdrawal of 100 on the next date
 
-And a deposit of 500 on a final date  
+> And a deposit of 500 on a final date  
 
-When they print their bank statements
+> When they print their bank statements
 
-Then they should see  
+> Then they should see  
 
 >	DATE		| AMOUNT  | BALANCE
 
