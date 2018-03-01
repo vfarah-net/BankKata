@@ -1,137 +1,149 @@
-﻿using NUnit.Framework;
+﻿using AutoFixture;
+using AutoFixture.AutoMoq;
+using AutoFixture.NUnit3;
+using FluentAssertions;
+using Moq;
+using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Codurance.Domain.Unit.Tests
 {
     [TestFixture]
     public class WhenWorkingWithTheAccount
     {
-        [TestFixture]
-        public class AndDepositingAnAmountOfOneThousand : WhenWorkingWithTheAccount
+        private IFixture fixture;
+        private Mock<ITransactionRepository> mockTransactionRepository;
+
+        [OneTimeSetUp]
+        public void OneTimeSetup()
         {
-            [Test]
-            public void ShouldCreateATransactionWithTheCorrectInformation()
+            fixture = new Fixture().Customize(new AutoMoqCustomization());
+            mockTransactionRepository = fixture.Freeze<Mock<ITransactionRepository>>();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            mockTransactionRepository.Reset();
+        }
+
+        private Transaction CreateTransaction(
+            int? amount = null, 
+            string createdDate = null, 
+            int? balance = null)
+        {
+            return new Transaction(
+                    amount??fixture.Create<int>(),
+                    createdDate??fixture.Create<string>(),
+                    balance??fixture.Create<int>());
+        }
+
+        [TestFixture]
+        public class AndDepositingAnyAmount : WhenWorkingWithTheAccount
+        {
+            private Transaction transaction;
+
+            [SetUp]
+            public void SetUpTransactionRepositoryToReturnATransaction()
             {
-                Transaction expectedTransaction = null;
-                Account subject = new Account((arg) => expectedTransaction = arg.Transaction);
-                Regex expectedDateFormat = new Regex(@"^(\d{1,2})\/(\d{1,2})\/(\d{4})$");
-
-                subject.Deposit(1000);
-
-                Assert.That(expectedTransaction, Is.Not.Null);
-                Assert.That(expectedDateFormat.IsMatch(expectedTransaction.CreatedDate), Is.True);
-                Assert.That(expectedTransaction.Amount, Is.EqualTo(1000));
-                Assert.That(expectedTransaction.Balance, Is.EqualTo(1000));
+                transaction = CreateTransaction();
+                mockTransactionRepository
+                    .Setup(x => x.Deposit(It.IsAny<int>()))
+                    .Returns(() => transaction);
             }
 
-            [Test]
-            public void ShouldDepositAnAmountOfOneThousandAndHaveABalanceOfAThousand()
+            [Test, AutoData]
+            public void ShouldUseTheTransactionRepositoryToDepositAnAmount(int amount)
             {
-                Transaction expectedTransaction = null;
-                Account subject = new Account((arg) => expectedTransaction = arg.Transaction);
+                Account subject = new Account(mockTransactionRepository.Object);
 
-                subject.Deposit(1000);
+                subject.Deposit(amount);
 
-                Assert.That(expectedTransaction.Amount, Is.EqualTo(1000));
-                Assert.That(expectedTransaction.Balance, Is.EqualTo(1000));
+                mockTransactionRepository.Verify(x => x.Deposit(It.IsIn(amount)), Times.Once);
             }
         }
 
         [TestFixture]
-        public class AndWithdrawingAnAmountOfOneHundred : WhenWorkingWithTheAccount
+        public class AndWithdrawingAnyAmount : WhenWorkingWithTheAccount
         {
-            [Test]
-            public void ShouldWithdrawMinusOneHundredAndLeaveABalanceOfNineHundred()
+            private Transaction transaction;
+
+            [SetUp]
+            public void SetUpTransactionRepositoryToReturnATransaction()
             {
-                IList<Transaction> expectedTransactions = new List<Transaction>();
-                Account subject = new Account((arg) => expectedTransactions.Add(arg.Transaction));
-
-                subject.Deposit(1000);
-                subject.Withdraw(-100);
-
-                Assert.That(expectedTransactions.Count, Is.EqualTo(2));
-                Assert.That(expectedTransactions.Last().Balance, Is.EqualTo(900));
+                transaction = CreateTransaction();
+                mockTransactionRepository
+                    .Setup(x => x.Withdraw(It.IsAny<int>()))
+                    .Returns(() => transaction);
             }
 
-            [Test]
-            public void ShouldWithdrawPositiveOneHundredAndLeaveABalanceOfNineHundred()
+            [Test, AutoData]
+            public void ShouldUseTheTransactionRepositoryToWithdrawAnyAmount(int amount)
             {
-                IList<Transaction> expectedTransactions = new List<Transaction>();
-                Account subject = new Account((arg) => expectedTransactions.Add(arg.Transaction));
+                Account subject = new Account(mockTransactionRepository.Object);
 
-                subject.Deposit(1000);
-                subject.Withdraw(100);
+                subject.Withdraw(amount);
 
-                Assert.That(expectedTransactions.Count, Is.EqualTo(2));
-                Assert.That(expectedTransactions.Last().Balance, Is.EqualTo(900));
+                mockTransactionRepository.Verify(x => x.Withdraw(It.IsIn(amount)), Times.Once);
             }
         }
 
         [TestFixture]
-        public class AndFinallyDepositingFiveHundred : WhenWorkingWithTheAccount
+        public class AndPrintingStatements : WhenWorkingWithTheAccount
         {
-            [Test]
-            public void ShouldDepositFiveHundredAndLeaveABalanceOfOneThousandFourHundred()
+            private List<Transaction> transactions;
+
+            [SetUp]
+            public void SetUpTransactionRepositoryToReturnExpectedTransactions()
             {
-                IList<Transaction> expectedTransactions = new List<Transaction>();
-                Account subject = new Account((arg) => expectedTransactions.Add(arg.Transaction));
-
-                subject.Deposit(1000);
-                subject.Withdraw(100);
-                subject.Deposit(500);
-
-                Assert.That(expectedTransactions.Count, Is.EqualTo(3));
-                Assert.That(expectedTransactions.Last().Balance, Is.EqualTo(1400));
-            }
-        }
-
-        [TestFixture]
-        public class AndPrintingAllTransactions : WhenWorkingWithTheAccount
-        {
-            [Test]
-            public void ShouldPrintAllTransactionsInDescendingOrder()
-            {
-                List<Transaction> expectedTransactions = new List<Transaction>();
-                Account subject = new Account(null, (arg) => expectedTransactions.AddRange(arg.Transactions));
-                subject.Deposit(1000);
-                subject.Withdraw(100);
-                subject.Deposit(500);
-
-                subject.PrintStatement();
-
-                CollectionAssert.IsNotEmpty(expectedTransactions);
-                Assert.That(expectedTransactions.Count, Is.EqualTo(3));
-                Assert.That(expectedTransactions[0].Amount, Is.EqualTo(500));
-                Assert.That(expectedTransactions[0].Balance, Is.EqualTo(1400));
-
-                Assert.That(expectedTransactions[1].Amount, Is.EqualTo(-100));
-                Assert.That(expectedTransactions[1].Balance, Is.EqualTo(900));
-
-                Assert.That(expectedTransactions[2].Amount, Is.EqualTo(1000));
-                Assert.That(expectedTransactions[2].Balance, Is.EqualTo(1000));
-            }
-
-            [Test]
-            public void ShouldPrintAStatementWithHeadersAndExpectedNumberFormatting()
-            {
-                string expectedHeader = " DATE | AMOUNT | BALANCE ";
-                string expectedFiveHundredDepositNumberFormat = "500.00";
-                string actualStatement = null;
-                Account subject = new Account(null, (arg) =>
+                // Expected transactions
+                //> 10/04/2014 | 500.00  | 1400.00
+                //> 02/04/2014 | -100.00 | 900.00
+                //> 01/04/2014 | 1000.00 | 1000.00
+                transactions = new List<Transaction>
                 {
-                    actualStatement = arg.Statement;
-                });
-                subject.Deposit(1000);
-                subject.Withdraw(100);
-                subject.Deposit(500);
+                    CreateTransaction(1000, "01/04/2014", 1000),
+                    CreateTransaction(-100, "02/04/2014", 900),
+                    CreateTransaction(500, "10/04/2014", 1400)
+                };
+
+                mockTransactionRepository
+                    .Setup(x => x.GetTransactions)
+                    .Returns(() => transactions);
+
+                mockTransactionRepository
+                    .Setup(x => x.GetTransactionsInReverse)
+                    .Returns(() => transactions?.Reverse<Transaction>().ToList());
+            }
+
+            [Test]
+            public void ShouldUseTheTransactionRepositoryToGetTransactionsInReverse()
+            {
+                Account subject = new Account(mockTransactionRepository.Object);
 
                 subject.PrintStatement();
 
-                Assert.That(actualStatement, Is.Not.Empty);
-                Assert.That(actualStatement.Contains(expectedHeader), Is.True);
-                Assert.That(actualStatement.Contains(expectedFiveHundredDepositNumberFormat), Is.True);
+                mockTransactionRepository.Verify(x => x.GetTransactionsInReverse, Times.Once);
+            }
+
+            [Test]
+            public void ShouldPrintTheTransactionsAccordingToTheAcceptanceCriteria()
+            {
+                string acceptanceCriteria = 
+                    " DATE | AMOUNT | BALANCE " + Environment.NewLine +
+                    "10/04/2014 | 500.00 | 1400.00" + Environment.NewLine +
+                    "02/04/2014 | -100.00 | 900.00" + Environment.NewLine +
+                    "01/04/2014 | 1000.00 | 1000.00" + Environment.NewLine;
+                string actualStatement = null;
+                Account subject = new Account(mockTransactionRepository.Object, null, (args) => {
+                    actualStatement = args.Statement;
+                });
+
+                subject.PrintStatement();
+
+                actualStatement.Should().Be(acceptanceCriteria);
             }
         }
     }

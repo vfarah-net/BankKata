@@ -28,8 +28,8 @@ namespace Codurance.Domain
             Statement = statementBuilder.ToString();
         }
 
-        public IReadOnlyList<Transaction> Transactions { get; protected set; }
-        public string Statement { get; protected set; }
+        public IReadOnlyList<Transaction> Transactions { get; private set; }
+        public string Statement { get; private set; }
 
         private string FormatAmount(int amount)
         {
