@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using FluentAssertions;
 using LightBDD.Framework;
 using LightBDD.Framework.Scenarios.Extended;
-using LightBDD.NUnit3;
+using LightBDD.XUnit2;
+
+//using LightBDD.NUnit3;
 
 namespace Codurance.Domain.Integration.Tests
 {
-    [FeatureDescription("As a user I want an Account to make deposits, withdrawels or print statements")]
+ 
+    [FeatureDescription("As a user I want an Account to make deposits, withdrawals or print statements")]
     public partial class AccountFeature
     {
         [Scenario]

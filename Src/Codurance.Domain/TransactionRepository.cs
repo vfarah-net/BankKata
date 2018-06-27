@@ -26,12 +26,16 @@ namespace Codurance.Domain
 
         public IReadOnlyList<Transaction> GetTransactions
         {
-            get { return transactions; }
+            get { return transactions.AsReadOnly(); }
         }
 
         public IReadOnlyList<Transaction> GetTransactionsInReverse
         {
-            get { return transactions.Reverse<Transaction>().ToList(); }
+            get { return transactions
+                    .Reverse<Transaction>()
+                    .ToList()
+                    .AsReadOnly();
+            }
         }
 
         private Transaction AddTransaction(int amount)

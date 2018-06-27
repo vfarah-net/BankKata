@@ -1,35 +1,33 @@
-﻿using AutoFixture;
+﻿using System;
+using System.Collections.Generic;
+using AutoFixture;
 using AutoFixture.AutoMoq;
-using AutoFixture.NUnit3;
+using AutoFixture.Xunit2;
 using FluentAssertions;
 using Moq;
-using NUnit.Framework;
-using System.Collections.Generic;
+using Xunit;
 
 namespace Codurance.Domain.Unit.Tests
 {
-    [TestFixture]
-    public class WhenWorkingWithTheTransactionRepository
+    public class WhenWorkingWithTheTransactionRepository : IDisposable
     {
         private string date;
-        private IFixture fixture;
-        private Mock<IClock> mockClock;
+        private readonly IFixture fixture;
+        private readonly Mock<IClock> mockClock;
 
-        [OneTimeSetUp]
-        public void OneTimeSetup()
+        public WhenWorkingWithTheTransactionRepository()
         {
             fixture = new Fixture().Customize(new AutoMoqCustomization());
             mockClock = fixture.Freeze<Mock<IClock>>();
+            SetUpTheClockToAlwaysReturnATestableDate();
         }
 
-        [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
-            mockClock.Reset();
+            mockClock?.Reset();
         }
 
-        [SetUp]
-        public void SetUpTheClockToAlwaysReturnATestableDate()
+        private void SetUpTheClockToAlwaysReturnATestableDate()
         {
             date = "01/04/2014";
             this.mockClock
@@ -37,17 +35,15 @@ namespace Codurance.Domain.Unit.Tests
                 .Returns(() => date);
         }
 
-        // Should be able to deposit amounts
-        [TestFixture]
-        public class AndDepositingAnAmount: WhenWorkingWithTheTransactionRepository
-        {            
-            [Test, AutoData]
+        public class AndDepositingAnAmount : WhenWorkingWithTheTransactionRepository
+        {
+            [Theory, AutoData]
             public void ShouldCreateATransactionWithTheCorrectInformation(int amount)
             {
                 Transaction actualTransaction = null;
-                ITransactionRepository subject = fixture.Create<TransactionRepository>();
+                ITransactionRepository transactionRepository = fixture.Create<TransactionRepository>();
 
-                actualTransaction = subject.Deposit(amount);
+                actualTransaction = transactionRepository.Deposit(amount);
 
                 actualTransaction.Should().NotBeNull();
                 actualTransaction.Amount.Should().Be(amount);
@@ -55,29 +51,28 @@ namespace Codurance.Domain.Unit.Tests
                 actualTransaction.CreatedDate.Should().Be(date);
             }
 
-            [Test]
+            [Fact]
             public void ShouldKeepARunningBalance()
             {
                 const int expectedBalance = 200;
-                ITransactionRepository subject = fixture.Create<TransactionRepository>();
+                ITransactionRepository transactionRepository = fixture.Create<TransactionRepository>();
 
-                subject.Deposit(100);
-                Transaction finalTransaction = subject.Deposit(100);
+                transactionRepository.Deposit(100);
+                Transaction finalTransaction = transactionRepository.Deposit(100);
 
                 finalTransaction.Balance.Should().Be(expectedBalance);
             }
         }
 
-        [TestFixture]
         public class AndWithdrawingAnAmount : WhenWorkingWithTheTransactionRepository
         {
-            [Test, AutoData]
+            [Theory, AutoData]
             public void ShouldCreateATransactionWithTheCorrectInformation(int amount)
             {
                 Transaction actualTransaction = null;
-                ITransactionRepository subject = fixture.Create<TransactionRepository>();
+                ITransactionRepository transactionRepository = fixture.Create<TransactionRepository>();
 
-                actualTransaction = subject.Withdraw(amount);
+                actualTransaction = transactionRepository.Withdraw(amount);
 
                 actualTransaction.Should().NotBeNull();
                 actualTransaction.Amount.Should().Be(-amount);
@@ -86,19 +81,18 @@ namespace Codurance.Domain.Unit.Tests
             }
         }
 
-        [TestFixture]
-        public class AndGettingMultipleWithDrawsAndDeposits : WhenWorkingWithTheTransactionRepository
+        public class AndGettingMultipleWithdrawsAndDeposits : WhenWorkingWithTheTransactionRepository
         {
-            [Test]
+            [Fact]
             public void ShouldGetTransactionsThatHaveOccured()
             {
                 List<Transaction> expectedTransactions = new List<Transaction>();
-                ITransactionRepository subject = fixture.Create<TransactionRepository>();
-                Transaction firstDeposit = subject.Deposit(1000);
-                Transaction firstWithdraw = subject.Withdraw(100);
-                Transaction secondDeposit = subject.Deposit(500);
+                ITransactionRepository transactionRepository = fixture.Create<TransactionRepository>();
+                Transaction firstDeposit = transactionRepository.Deposit(1000);
+                Transaction firstWithdraw = transactionRepository.Withdraw(100);
+                Transaction secondDeposit = transactionRepository.Deposit(500);
 
-                var actualTransactions = subject.GetTransactions;
+                var actualTransactions = transactionRepository.GetTransactions;
 
                 actualTransactions.Should().NotBeNullOrEmpty();
                 actualTransactions.Should().Contain(firstDeposit);
@@ -106,16 +100,16 @@ namespace Codurance.Domain.Unit.Tests
                 actualTransactions.Should().Contain(secondDeposit);
             }
 
-            [Test]
+            [Fact]
             public void ShouldGetTransactionsThatHaveOccuredInReverse()
             {
                 List<Transaction> expectedTransactions = new List<Transaction>();
-                ITransactionRepository subject = fixture.Create<TransactionRepository>();
-                Transaction firstTransaction = subject.Deposit(1000);
-                Transaction secondTransaction = subject.Withdraw(100);
-                Transaction thirdTransaction = subject.Deposit(500);
+                ITransactionRepository transactionRepository = fixture.Create<TransactionRepository>();
+                Transaction firstTransaction = transactionRepository.Deposit(1000);
+                Transaction secondTransaction = transactionRepository.Withdraw(100);
+                Transaction thirdTransaction = transactionRepository.Deposit(500);
 
-                var actualTransactions = subject.GetTransactionsInReverse;
+                var actualTransactions = transactionRepository.GetTransactionsInReverse;
 
                 actualTransactions[0].Should().Be(thirdTransaction);
                 actualTransactions[1].Should().Be(secondTransaction);

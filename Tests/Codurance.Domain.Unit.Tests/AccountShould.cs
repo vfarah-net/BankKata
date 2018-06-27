@@ -1,52 +1,55 @@
-﻿using AutoFixture;
-using AutoFixture.AutoMoq;
-using AutoFixture.NUnit3;
-using FluentAssertions;
-using Moq;
-using NUnit.Framework;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using AutoFixture;
+using AutoFixture.AutoMoq;
+using AutoFixture.Xunit2;
+using FluentAssertions;
+using Moq;
+using Xunit;
 
 namespace Codurance.Domain.Unit.Tests
 {
-    [TestFixture]
-    public class WhenWorkingWithTheAccount
+    public class WhenWorkingWithTheAccount : IDisposable
     {
-        private IFixture fixture;
-        private Mock<ITransactionRepository> mockTransactionRepository;
+        private readonly IFixture fixture;
+        private readonly Mock<ITransactionRepository> mockTransactionRepository;
 
-        [OneTimeSetUp]
-        public void OneTimeSetup()
+        public WhenWorkingWithTheAccount()
         {
             fixture = new Fixture().Customize(new AutoMoqCustomization());
             mockTransactionRepository = fixture.Freeze<Mock<ITransactionRepository>>();
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            mockTransactionRepository.Reset();
-        }
-
         private Transaction CreateTransaction(
-            int? amount = null, 
-            string createdDate = null, 
+            int? amount = null,
+            string createdDate = null,
             int? balance = null)
         {
             return new Transaction(
-                    amount??fixture.Create<int>(),
-                    createdDate??fixture.Create<string>(),
-                    balance??fixture.Create<int>());
+                amount ?? fixture.Create<int>(),
+                createdDate ?? fixture.Create<string>(),
+                balance ?? fixture.Create<int>());
         }
 
-        [TestFixture]
+        public void Dispose()
+        {
+            mockTransactionRepository?.Reset();
+        }
+
         public class AndDepositingAnyAmount : WhenWorkingWithTheAccount
         {
             private Transaction transaction;
 
-            [SetUp]
-            public void SetUpTransactionRepositoryToReturnATransaction()
+            public AndDepositingAnyAmount()
+            {
+                SetUpTransactionRepositoryToReturnATransaction();
+            }
+
+
+            private void SetUpTransactionRepositoryToReturnATransaction()
             {
                 transaction = CreateTransaction();
                 mockTransactionRepository
@@ -54,24 +57,28 @@ namespace Codurance.Domain.Unit.Tests
                     .Returns(() => transaction);
             }
 
-            [Test, AutoData]
+
+            [Theory, AutoData]
             public void ShouldUseTheTransactionRepositoryToDepositAnAmount(int amount)
             {
-                Account subject = new Account(mockTransactionRepository.Object);
+                Account account = new Account(mockTransactionRepository.Object);
 
-                subject.Deposit(amount);
+                account.Deposit(amount);
 
                 mockTransactionRepository.Verify(x => x.Deposit(It.IsIn(amount)), Times.Once);
             }
         }
 
-        [TestFixture]
         public class AndWithdrawingAnyAmount : WhenWorkingWithTheAccount
         {
             private Transaction transaction;
 
-            [SetUp]
-            public void SetUpTransactionRepositoryToReturnATransaction()
+            public AndWithdrawingAnyAmount()
+            {
+                SetUpTransactionRepositoryToReturnATransaction();
+            }
+
+            private void SetUpTransactionRepositoryToReturnATransaction()
             {
                 transaction = CreateTransaction();
                 mockTransactionRepository
@@ -79,24 +86,27 @@ namespace Codurance.Domain.Unit.Tests
                     .Returns(() => transaction);
             }
 
-            [Test, AutoData]
+            [Theory, AutoData]
             public void ShouldUseTheTransactionRepositoryToWithdrawAnyAmount(int amount)
             {
-                Account subject = new Account(mockTransactionRepository.Object);
+                Account account = new Account(mockTransactionRepository.Object);
 
-                subject.Withdraw(amount);
+                account.Withdraw(amount);
 
                 mockTransactionRepository.Verify(x => x.Withdraw(It.IsIn(amount)), Times.Once);
             }
         }
 
-        [TestFixture]
         public class AndPrintingStatements : WhenWorkingWithTheAccount
         {
             private List<Transaction> transactions;
 
-            [SetUp]
-            public void SetUpTransactionRepositoryToReturnExpectedTransactions()
+            public AndPrintingStatements()
+            {
+                SetUpTransactionRepositoryToReturnExpectedTransactions();
+            }
+
+            private void SetUpTransactionRepositoryToReturnExpectedTransactions()
             {
                 // Expected transactions
                 //> 10/04/2014 | 500.00  | 1400.00
@@ -118,34 +128,33 @@ namespace Codurance.Domain.Unit.Tests
                     .Returns(() => transactions?.Reverse<Transaction>().ToList());
             }
 
-            [Test]
+            [Fact]
             public void ShouldUseTheTransactionRepositoryToGetTransactionsInReverse()
             {
-                Account subject = new Account(mockTransactionRepository.Object);
+                Account account = new Account(mockTransactionRepository.Object);
 
-                subject.PrintStatement();
+                account.PrintStatement();
 
                 mockTransactionRepository.Verify(x => x.GetTransactionsInReverse, Times.Once);
             }
 
-            [Test]
+            [Fact]
             public void ShouldPrintTheTransactionsAccordingToTheAcceptanceCriteria()
             {
-                string acceptanceCriteria = 
+                string acceptanceCriteria =
                     " DATE | AMOUNT | BALANCE " + Environment.NewLine +
                     "10/04/2014 | 500.00 | 1400.00" + Environment.NewLine +
                     "02/04/2014 | -100.00 | 900.00" + Environment.NewLine +
                     "01/04/2014 | 1000.00 | 1000.00" + Environment.NewLine;
                 string actualStatement = null;
-                Account subject = new Account(mockTransactionRepository.Object, null, (args) => {
+                Account account = new Account(mockTransactionRepository.Object, null, (args) => {
                     actualStatement = args.Statement;
                 });
 
-                subject.PrintStatement();
+                account.PrintStatement();
 
                 actualStatement.Should().Be(acceptanceCriteria);
             }
         }
     }
 }
-
