@@ -7,7 +7,7 @@ Start with a class following this structure
 public class Account {
   public void Deposit(int amount);
   public void Withdraw(int amount);
-  public void PrintStatement(int amount);
+  public void PrintStatement();
 }
 ```
 
