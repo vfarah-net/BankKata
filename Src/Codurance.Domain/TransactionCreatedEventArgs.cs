@@ -8,6 +8,6 @@ namespace Codurance.Domain
         {
             this.Transaction = transaction;
         }
-        public Transaction Transaction{ get; protected set; }
+        public Transaction Transaction{ get; private set; }
     }
 }

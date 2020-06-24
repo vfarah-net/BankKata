@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Information", "Information"
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codurance.Domain.Integration.Tests", "Tests\Codurance.Domain.Integration.Tests\Codurance.Domain.Integration.Tests.csproj", "{50511823-CBC0-4F39-BD5A-34A9736736C3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{740D0838-1FBB-484A-84C3-8BDA92A890F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{740D0838-1FBB-484A-84C3-8BDA92A890F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{740D0838-1FBB-484A-84C3-8BDA92A890F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50511823-CBC0-4F39-BD5A-34A9736736C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50511823-CBC0-4F39-BD5A-34A9736736C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50511823-CBC0-4F39-BD5A-34A9736736C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50511823-CBC0-4F39-BD5A-34A9736736C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
